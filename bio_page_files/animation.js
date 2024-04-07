@@ -1,12 +1,12 @@
 let canvas = document.getElementById("background");
-let ctx = canvas.getContext("2d");
+let ctx = canvas.getContext("2d"); // Get the drawing context
 
-let boids;
+let boids; // Declare list so that the on_resize call doesn't error
 
 function on_resize(event) {
 	if (boids) for (let boid of boids) {
 		if (boid.p.x > 0.5 * canvas.width) {
-			boid.p.x += window.innerWidth - canvas.width;
+			boid.p.x += window.innerWidth - canvas.width; // Keep boids same distance from nearest vertical edge
 		}
 	}
 	
@@ -19,7 +19,7 @@ on_resize();
 window.addEventListener("resize", on_resize);
 
 
-function mod(a, b) {
+function mod(a, b) { // Real modulo function since % is actually remainder
 	return (a % b + b) % b;
 }
 
@@ -60,7 +60,7 @@ class Boid {
 		} else {
 			this.p = new Vec2(Math.random() * canvas.width, Math.random() * canvas.height);
 			this.v = Vec2.from_polar(40, Math.random() * 2 * Math.PI);
-			this.comfort_distance = 50 * (1 + 0.2 * (Math.random() - 0.5));
+			this.comfort_distance = 50 * (1 + 0.2 * (Math.random() - 0.5)); // Give the boids some unique personalities
 			this.follow_distance = 100 * (1 + 0.2 * (Math.random() - 0.5));
 			this.group_distance = 200 * (1 + 0.2 * (Math.random() - 0.5));
 			this.preferred_direction = Vec2.from_polar(1 + 0.4 * (Math.random() - 0.5), Math.random() * 2 * Math.PI);
@@ -83,9 +83,9 @@ class Boid {
 		ctx.fill();
 		ctx.stroke();
 	}
-	step(other, dt) {
+	step(other, dt) { // Called for each pair of boids
 		let delta = this.p.sub(other.p);
-		
+		// Use the shortest distance wrapped around edges
 		if (delta.x > 0.5 * canvas.width) delta.x -= canvas.width;
 		else if (delta.x < -0.5 * canvas.width) delta.x += canvas.width;
 		if (delta.y > 0.5 * canvas.height) delta.y -= canvas.height;
@@ -95,22 +95,22 @@ class Boid {
 		if (distance == 0) return;
 		delta = delta.mult(1 / distance);
 		
-		if (distance < this.comfort_distance) this.v = this.v.add(delta.mult((1 - distance / this.comfort_distance) * 50 * dt));
-		if (distance < this.follow_distance) this.v = this.v.add(other.v.sub(this.v).mult((1 - distance / this.follow_distance) * 0.2 * dt));
-		if (distance < this.group_distance) this.v = this.v.add(delta.mult((1 - distance / this.group_distance) * -0.2 * dt));
+		if (distance < this.comfort_distance) this.v = this.v.add(delta.mult((1 - distance / this.comfort_distance) * 50 * dt)); // Repulsion force
+		if (distance < this.follow_distance) this.v = this.v.add(other.v.sub(this.v).mult((1 - distance / this.follow_distance) * 0.2 * dt)); // Align to nearby velocities
+		if (distance < this.group_distance) this.v = this.v.add(delta.mult((1 - distance / this.group_distance) * -0.2 * dt)); // Attract towards a larger group
 	}
-	tick(dt) {
+	tick(dt) { // Called for each boid
 		this.v = this.v.add(this.preferred_direction.mult(2 * dt));
 		
 		let speed = this.v.len();
-		if (speed > 60) {
+		if (speed > 60) { // Enforce speed limits
 			this.v = this.v.mult(60 / speed);
 		} else if (speed < 20) {
 			this.v = this.v.mult(20 / speed);
-		} else {
+		} else { // Move towards preferred speed
 			this.v = this.v.mult(1 + (this.preferred_speed / speed - 1) * 1 * dt);
 		}
-		
+		// Increment position and wrap over edges
 		this.p = this.p.add(this.v.mult(dt));
 		this.p.x = mod(this.p.x, canvas.width);
 		this.p.y = mod(this.p.y, canvas.height);
@@ -122,7 +122,7 @@ let boid_radius = 20;
 
 
 
-function tick(dt) {
+function tick(dt) { // Simulate a time step
 	for (let i = 0; i < boids.length; i++) {
 		boids_next[i] = new Boid(boids[i]);
 		for (let j = 0; j < boids.length; j++) {
@@ -141,6 +141,7 @@ boids = [];
 let boids_next = [];
 for (let i = 0; i < 200; i++) boids.push(new Boid());
 
+// Roughly simulate 30 seconds on page load so some flocks start forming
 for (let i = 0; i < 30; i++) tick(1);
 
 
@@ -151,7 +152,7 @@ function draw() {
 	let dt = (now - previous_time) / 1000 * 1;
 	previous_time = now;
 	
-	if (dt > 1) dt = 1;
+	if (dt > 1) dt = 1; // Prevent flocks from scattering if the page pauses for a while
 	
 	tick(dt);
 	
@@ -162,6 +163,7 @@ function draw() {
 	for (let boid of boids) {
 		boid.draw();
 		
+		// Draw copies of the boids if they are on the edge so they don't pop in/out when wrapping
 		let wrap = new Boid(boid);
 		let first_wrap = false;
 		if (boid.p.x < boid_radius) {

@@ -7,7 +7,7 @@
 			border-style: solid;
 		}
 	</style>
-	<script>
+	<script> // Include the JS function in the header
 		function button_click() {
 			let r = document.getElementById("r").value;
 			let g = document.getElementById("g").value;
@@ -17,7 +17,7 @@
 			let b_border = document.getElementById("bb").value;
 			let width = document.getElementById("w").value;
 			let text = document.getElementById("text");
-			
+			// Format input values into style color strings
 			text.style.backgroundColor = `rgb(${r},${g},${b})`;
 			text.style.borderColor = `rgb(${r_border},${g_border},${b_border})`;
 			text.style.borderWidth = width;
@@ -32,7 +32,7 @@
 		
 		<br>
 		
-		<table style="border-spacing: 6pt;">
+		<table style="border-spacing: 6pt;"> <!-- Table also looks nicer here -->
 			<tr>
 				<th>Background Red (0 - 255)</th>
 				<th><input type="text" id="r"></th>
